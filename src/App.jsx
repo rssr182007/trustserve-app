@@ -20,6 +20,7 @@ import PostJob from './pages/PostJob';
 import MyRequests from './pages/MyRequests';
 import JobOffers from './pages/JobOffers';
 import PageNotFound from './lib/PageNotFound';
+import ProviderSetup from './pages/provider/ProviderSetup';
 
 function App() {
   return (
@@ -111,7 +112,11 @@ function App() {
             <ProviderProfile />
           </ProtectedRoute>
         } />
-        
+        <Route path="/provider/setup" element={
+          <ProtectedRoute allowedRoles={['provider']}>
+            <ProviderSetup />
+          </ProtectedRoute>
+        } />
         {/* 404 Page */}
         <Route path="*" element={<PageNotFound />} />
       </Routes>

@@ -19,6 +19,11 @@ function RoleSelect() {
       role: 'customer', 
       name: 'Test Customer',
       id: '5a295867-d2c2-4c37-a6e1-62ce40c45a7e'
+    },
+    '8888888888': { 
+      role: 'provider', 
+      name: 'Test Provider 2',
+      id: '57e405eb-5e48-457b-8484-0b547fa90929'
     }
   };
 
