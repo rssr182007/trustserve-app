@@ -1,80 +1,85 @@
 ﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../api/supabaseClient';
 import { useAuth } from '../lib/AuthContext';
 
 function RoleSelect() {
   const [selectedRole, setSelectedRole] = useState(null);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  // Hardcoded valid users for testing
-  const validUsers = {
-    '9876543210': { 
-      role: 'provider', 
-      name: 'Rajesh Kumar',
-      id: 'd15423e7-84ad-4d3e-a279-0e8e71ba65cd'
-    },
-    '9876543211': { 
-      role: 'customer', 
-      name: 'Test Customer',
-      id: '5a295867-d2c2-4c37-a6e1-62ce40c45a7e'
-    },
-    '8888888888': { 
-      role: 'provider', 
-      name: 'Test Provider 2',
-      id: '57e405eb-5e48-457b-8484-0b547fa90929'
-    }
-  };
-
-  const handleContinue = () => {
-    if (!selectedRole) {
-      alert('Please select a role');
+  const handleContinue = async () => {
+    if (!selectedRole || !phoneNumber || phoneNumber.length < 10) {
+      alert('Please select role and enter valid phone number');
       return;
     }
 
-    if (!phoneNumber || phoneNumber.length !== 10) {
-      alert('Please enter a valid 10-digit phone number');
-      return;
-    }
+    setLoading(true);
 
-    const user = validUsers[phoneNumber];
-    
-    if (!user) {
-      alert('Phone number not found. Use:\nProvider: 9876543210\nCustomer: 9876543211');
-      return;
-    }
+    try {
+      // Search for user by phone number
+      const { data: profile, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('phone', phoneNumber)
+        .maybeSingle();
 
-    if (user.role !== selectedRole) {
-      alert(`This phone number is for a ${user.role}. Please select the ${user.role} role.`);
-      return;
-    }
+      if (error) {
+        console.error('Database error:', error);
+        alert('Database error. Please try again.');
+        setLoading(false);
+        return;
+      }
 
-    const userData = {
-      id: user.id,
-      phone: phoneNumber,
-      email: `${phoneNumber}@example.com`,
-      full_name: user.name,
-    };
-    
-    login(userData, selectedRole);
-    
-    if (selectedRole === 'customer') {
-      navigate('/home');
-    } else {
-      navigate('/provider/home');
+      if (!profile) {
+        // NEW USER - Redirect to Sign Up page
+        navigate('/signup', { state: { role: selectedRole, phone: phoneNumber } });
+        setLoading(false);
+        return;
+      }
+
+      // Check role matches
+      if (profile.role !== selectedRole) {
+        alert(`This phone number is registered as a ${profile.role}. Please select the correct role.`);
+        setLoading(false);
+        return;
+      }
+
+      // EXISTING USER - Direct login
+      const userData = {
+        id: profile.id,
+        phone: profile.phone,
+        email: profile.email || `${profile.phone}@example.com`,
+        full_name: profile.full_name,
+      };
+      
+      login(userData, selectedRole);
+      
+      if (selectedRole === 'customer') {
+        navigate('/home');
+      } else {
+        navigate('/provider/home');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      alert('Login failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-md p-6 max-w-md w-full">
-        <h1 className="text-2xl font-bold text-center mb-6">Welcome to Service App</h1>
+        <h1 className="text-2xl font-bold text-center mb-6">Welcome to TrustServe</h1>
         
         <div className="mb-6">
           <label className="block text-sm font-medium mb-2">I am a:</label>
           <div className="grid grid-cols-2 gap-4">
             <button
+              type="button"
               onClick={() => setSelectedRole('customer')}
               className={`p-4 border-2 rounded-lg text-center transition-all ${
                 selectedRole === 'customer' 
@@ -88,6 +93,7 @@ function RoleSelect() {
             </button>
             
             <button
+              type="button"
               onClick={() => setSelectedRole('provider')}
               className={`p-4 border-2 rounded-lg text-center transition-all ${
                 selectedRole === 'provider' 
@@ -116,34 +122,11 @@ function RoleSelect() {
 
         <button 
           onClick={handleContinue} 
-          className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
         >
-          Continue
+          {loading ? 'Checking...' : 'Continue'}
         </button>
-
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <p className="text-xs text-gray-500 text-center mb-2">Quick Login:</p>
-          <div className="flex gap-2">
-            <button 
-              onClick={() => {
-                setSelectedRole('customer');
-                setPhoneNumber('9876543211');
-              }}
-              className="flex-1 text-xs bg-blue-50 text-blue-600 py-2 rounded hover:bg-blue-100"
-            >
-              Customer (9876543211)
-            </button>
-            <button 
-              onClick={() => {
-                setSelectedRole('provider');
-                setPhoneNumber('9876543210');
-              }}
-              className="flex-1 text-xs bg-green-50 text-green-600 py-2 rounded hover:bg-green-100"
-            >
-              Provider (9876543210)
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

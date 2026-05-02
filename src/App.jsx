@@ -4,6 +4,7 @@ import { AuthProvider } from './lib/AuthContext';
 import AppLayout from './components/layout/AppLayout';
 import ProtectedRoute from './__shared__/ProtectedRoute';
 import RoleSelect from './pages/RoleSelect';
+import SignUp from './pages/SignUp';
 import Home from './pages/Home';
 import Bookings from './pages/Bookings';
 import BookService from './pages/BookService';
@@ -19,8 +20,8 @@ import ProviderProfile from './pages/provider/ProviderProfile';
 import PostJob from './pages/PostJob';
 import MyRequests from './pages/MyRequests';
 import JobOffers from './pages/JobOffers';
-import PageNotFound from './lib/PageNotFound';
 import ProviderSetup from './pages/provider/ProviderSetup';
+import PageNotFound from './lib/PageNotFound';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
         
         {/* Public Routes */}
         <Route path="/role-select" element={<RoleSelect />} />
+        <Route path="/signup" element={<SignUp />} />
         
         {/* Customer Routes - With Bottom Navigation */}
         <Route element={<AppLayout />}>
@@ -117,6 +119,7 @@ function App() {
             <ProviderSetup />
           </ProtectedRoute>
         } />
+        
         {/* 404 Page */}
         <Route path="*" element={<PageNotFound />} />
       </Routes>
